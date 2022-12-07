@@ -25,8 +25,8 @@ def day7 =
     case ((pwd, directories), cd("..")) ⇒ (pwd.parent, directories)
 
     case ((pwd, directories), cd(dir)) ⇒
-      val path      = pwd + dir
-      val directory = directories.getOrElse(path, Directory(path, Seq.empty, Seq.empty))
+      val path = pwd + dir
+      val directory = directories(path)
       (path, directories + (path → directory))
 
     case ((pwd, directories), file(size, name)) ⇒
@@ -34,8 +34,10 @@ def day7 =
       (pwd, directories + (pwd → directory))
 
     case ((pwd, directories), dir(dir)) ⇒
-      val directory = directories(pwd).addDir(pwd + dir)
-      (pwd, directories + (pwd → directory))
+      val newPath          = pwd + dir
+      val currentDirectory = directories(pwd).addDir(newPath)
+      val newDirectory     = Directory(newPath, Seq.empty, Seq.empty)
+      (pwd, directories + (pwd → currentDirectory, newPath → newDirectory))
 
     case ((pwd, directories), "$ ls") ⇒ (pwd, directories)
   }
