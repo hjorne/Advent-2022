@@ -29,7 +29,6 @@ def day8 =
   val scenic = grid.map { case ((i, j), height) ⇒
     grid
       .views(i, j)
-      .filter(_.nonEmpty)
       .map { trees ⇒
         val (l, r) = trees.span(_ < height)
         r.headOption.map(l :+ _).getOrElse(l).size
