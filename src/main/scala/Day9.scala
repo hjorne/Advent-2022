@@ -19,10 +19,8 @@ def simulate(input: Seq[String], n: Int): Int =
 
   val (_, seen) = input.foldLeft((Seq.fill(n)(Pos.zero), Set(Pos.zero))) {
     case ((pos, seen), re(dirstr, dist)) ⇒
-      val dir = dirmap(dirstr)
       (0 until dist.toInt).foldLeft((pos, seen)) { case ((pos, seen), _) ⇒
-        val newHead = pos.head + dir
-        val newPos = pos.tail.foldLeft(Seq(newHead)) { case (pos, tail) ⇒
+        val newPos = pos.tail.foldLeft(Seq(pos.head + dirmap(dirstr))) { case (pos, tail) ⇒
           pos :+ (tail + (pos.last - tail).move)
         }
         (newPos, seen + newPos.last)
