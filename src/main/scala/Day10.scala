@@ -2,46 +2,45 @@ enum Instr:
   case NoOp
   case AddX(value: Int)
 
-class CPU(output: Boolean):
+class CPU:
   import scala.collection.mutable
 
-  private var cycle   = 0
+  private var ticker  = 0
   private var x       = 1
   private val history = mutable.ArrayBuffer(x)
+  private val stdout  = mutable.ArrayBuffer.empty[Char]
 
   def run(instr: Instr): Unit = instr match
-    case Instr.NoOp ⇒ runCycle()
+    case Instr.NoOp ⇒ tick(1)
     case Instr.AddX(value) ⇒
-      runCycle()
-      runCycle()
+      tick(2)
       x += value
 
   def getHistory: Vector[Int] = history.toVector
+  def getOutput: String       = stdout.mkString
 
-  private def runCycle(): Unit =
-    history.addOne(x)
-    if output then outputCycle()
-    cycle += 1
+  private def tick(count: Int): Unit =
+    for _ ← 0 until count do
+      output()
+      history.addOne(x)
+      ticker += 1
 
-  private def outputCycle(): Unit =
-    if cycle          % 40 == 0 then println()
-    if x - 1 <= cycle % 40 && x + 1 >= cycle % 40 then print("#")
-    else print(" ")
+  private def output(): Unit =
+    if ticker % 40 == 0 && ticker > 0 then stdout.addOne('\n')
+
+    if x - 1 <= ticker % 40 && x + 1 >= ticker % 40 then stdout.addOne('#')
+    else stdout.addOne(' ')
 
 @main
 def day10 =
   val addx = raw"addx ([-\d]+)".r
-  val input = Common.getInput(10).map {
-    case "noop"      ⇒ Instr.NoOp
-    case addx(value) ⇒ Instr.AddX(value.toInt)
+  val cpu  = CPU()
+  Common.getInput(10).foreach {
+    // CPUs only like ADTs, no strings allowed
+    case "noop"      ⇒ cpu.run(Instr.NoOp)
+    case addx(value) ⇒ cpu.run(Instr.AddX(value.toInt))
   }
-
-  val cpu = CPU(output = false)
-  input.foreach(cpu.run)
-
   val history  = cpu.getHistory
   val strength = Seq(20, 60, 100, 140, 180, 220).map(i ⇒ i * history(i)).sum
   println(strength)
-
-  val outputCPU = CPU(output = true)
-  input.foreach(outputCPU.run)
+  println(cpu.getOutput)
