@@ -12,7 +12,6 @@ def day9 =
 def simulate(input: Seq[String], n: Int): Int =
   val re     = raw"([UDLR]) (\d+)".r
   val dirmap = Map("U" → Pos(0, 1), "D" → Pos(0, -1), "L" → Pos(-1, 0), "R" → Pos(1, 0))
-
   val (_, seen) = input.foldLeft((Seq.fill(n)(Pos(0, 0)), Set(Pos(0, 0)))) {
     case ((pos, seen), re(dirstr, dist)) ⇒
       (0 until dist.toInt).foldLeft((pos, seen)) { case ((pos, seen), _) ⇒
@@ -22,5 +21,4 @@ def simulate(input: Seq[String], n: Int): Int =
         (newPos, seen + newPos.last)
       }
   }
-
   seen.size
