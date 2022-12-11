@@ -5,8 +5,8 @@ case class Monkey(
     targets: Map[Boolean, Int],
     count: Long
 ):
-  def withItem(item: Long): Monkey = this.copy(items = items :+ item)
-  def thrown: Monkey               = this.copy(items = items.tail, count = count + 1)
+  def thrown: Monkey             = this.copy(items = items.tail, count = count + 1)
+  def caught(item: Long): Monkey = this.copy(items = items :+ item)
 
 @main
 def day11 =
@@ -17,25 +17,25 @@ def day11 =
 def keepAway(input: Map[Int, Monkey], divisor: Int, n: Int): Long =
   val mod = input.map(_._2.divis).product
   val monkeys = (0 until n).foldLeft(input) { case (monkeys, _) ⇒
-    monkeys.keys.toSeq.sorted.foldLeft(monkeys) { case (monkeys, id) ⇒
-      monkeys(id).items.foldLeft(monkeys) { case (monkeys, worry) ⇒
-        val newWorry = monkeys(id).f(worry) / divisor % mod
-        val target   = monkeys(id).targets(newWorry % monkeys(id).divis == 0)
+    monkeys.keys.toSeq.sorted.foldLeft(monkeys) { case (monkeys, curr) ⇒
+      monkeys(curr).items.foldLeft(monkeys) { case (monkeys, worry) ⇒
+        val newWorry = monkeys(curr).f(worry) / divisor % mod
+        val target   = monkeys(curr).targets(newWorry % monkeys(curr).divis == 0)
         monkeys + (
-          target → monkeys(target).withItem(newWorry),
-          id     → monkeys(id).thrown
+          curr   → monkeys(curr).thrown,
+          target → monkeys(target).caught(newWorry)
         )
       }
     }
   }
 
-  monkeys.toList.map(_._2.count).sorted.reverse.take(2).product
+  monkeys.values.map(_.count).toSeq.sortBy(-_).take(2).product
 
 def parse(input: String): Map[Int, Monkey] =
   val operationRe = raw"(?s).*Operation: new = old ([+*]) (\d+|old).*".r
   val targetRe    = raw"If (true|false): throw to monkey (\d+)".r
   input
-    .split("\n\n")
+    .split(raw"\n\n")
     .toVector
     .map { s ⇒
       val id = raw"Monkey (\d+)".r.findFirstMatchIn(s).get.group(1).toInt
