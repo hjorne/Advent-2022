@@ -1,11 +1,14 @@
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 
-case class Grid(grid: Vector[Vector[Int]]):
+case class Grid(grid: Vector[Vector[Char]]):
   private val (n, m)    = (grid.length, grid(0).length)
   private val neighbors = Vector((0, 1), (0, -1), (-1, 0), (1, 0))
 
-  def apply(i: Int, j: Int): Int = grid(i)(j)
+  def apply(i: Int, j: Int): Int = grid(i)(j) match
+    case 'S' ⇒ 'a'
+    case 'E' ⇒ 'z'
+    case c   ⇒ c
 
   def bounds(i: Int, j: Int): Boolean =
     i >= 0 && i < n && j >= 0 && j < m
@@ -15,24 +18,17 @@ case class Grid(grid: Vector[Vector[Int]]):
       .map { case (ip, jp) ⇒ (ip + i, jp + j) }
       .filter { case (ip, jp) ⇒ bounds(ip, jp) && this(ip, jp) - this(i, j) <= 1 }
 
+  def find(value: Char): Vector[(Int, Int)] =
+    grid.zipWithIndex.flatMap { case (s, i) ⇒
+      s.zipWithIndex.collect { case (v, j) if v == value ⇒ (i, j) }
+    }
+
 @main
 def day12 =
-  val input = Common.getInput(12).map(s ⇒ s.toCharArray.toVector)
-  val Vector((is, js, _), (ie, je, _)) = input.zipWithIndex
-    .map { case (s, i) ⇒
-      s.zipWithIndex.map { case (c, j) ⇒ (i, j, c) }.filter { case (_, _, c) ⇒
-        c == 'S' || c == 'E'
-      }
-    }
-    .filter(_.nonEmpty)
-    .flatten
-  val grid = Grid {
-    input.map(_.map {
-      case 'S' ⇒ 0
-      case 'E' ⇒ 25
-      case c   ⇒ c - 'a'
-    })
-  }
+  val input    = Common.getInput(12).map(s ⇒ s.toCharArray.toVector)
+  val grid     = Grid(input)
+  val (is, js) = grid.find('S').head
+  val (ie, je) = grid.find('E').head
 
   @tailrec
   def bfs(queue: Queue[(Int, Int, Int)], seen: Set[(Int, Int)]): Int =
@@ -48,16 +44,6 @@ def day12 =
 
   println(bfs(Queue((is, js, 0)), Set((is, js))))
 
-  val min = grid.grid.zipWithIndex
-    .map { case (s, i) ⇒
-      s.zipWithIndex
-        .map { case (height, j) ⇒ (i, j, height) }
-        .filter { case (_, _, height) ⇒ height == 0 }
-        .map { case (i, j, _) ⇒ (i, j) }
-    }
-    .filter(_.nonEmpty)
-    .flatten
-    .map { case (i, j) ⇒ bfs(Queue((i, j, 0)), Set((i, j))) }
-    .min
+  val min = grid.find('a').map { case (i, j) => bfs(Queue((i, j, 0)), Set((i, j))) }.min
 
   println(min)
